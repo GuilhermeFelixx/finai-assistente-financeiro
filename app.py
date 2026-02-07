@@ -41,6 +41,11 @@ else:
 # -------------------------------------------------
 st.markdown(f"""
 <style>
+
+div[data-testid="stButton"][key="chat_btn"] button {
+    color: black !important;
+}
+
 #MainMenu {{visibility: hidden;}}
 footer {{visibility: hidden;}}
 header {{visibility: hidden;}}
@@ -216,7 +221,8 @@ with tab5:
 with tab6:
     pergunta = st.text_area("Digite sua pergunta:")
 
-    if st.button("Enviar Pergunta") and pergunta:
+    if st.button("Enviar Pergunta", key="chat_btn") and pergunta:
+
         try:
             api_key = st.secrets["GROQ_API_KEY"]
         except:
