@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 import sqlite3
 import matplotlib.pyplot as plt
-import os
 
 # ---------- CONFIG ----------
 st.set_page_config(page_title="FinAI", layout="centered")
@@ -60,10 +59,16 @@ pergunta = st.text_input("Digite sua pergunta:")
 
 if st.button("Enviar") and pergunta:
 
+    try:
+        api_key = st.secrets["GROQ_API_KEY"]
+    except KeyError:
+        st.error("API Key não encontrada nos Secrets.")
+        st.stop()
+
     with st.spinner("Pensando... 🤖"):
 
         headers = {
-            "Authorization": f"Bearer {os.getenv('GROQ_API_KEY')}",
+            "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
         }
 
@@ -89,12 +94,19 @@ if st.button("Enviar") and pergunta:
             json=data
         )
 
-        resposta = response.json()["choices"][0]["message"]["content"]
+        res_json = response.json()
 
-        st.write(resposta)
+        if "choices" in res_json:
+            resposta = res_json["choices"][0]["message"]["content"]
+            st.write(resposta)
 
+            # salvar no banco
+            c.execute("INSERT INTO conversas VALUES (?, ?)", (pergunta, resposta))
+            conn.commit()
+        else:
+            st.error("Erro ao comunicar com a API.")
+            st.write(res_json)
 
-    # salvar no banco
     c.execute("INSERT INTO conversas VALUES (?, ?)", (pergunta, resposta))
     conn.commit()
 
