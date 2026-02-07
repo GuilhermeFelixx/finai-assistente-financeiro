@@ -60,9 +60,10 @@ pergunta = st.text_input("Digite sua pergunta:")
 if st.button("Enviar") and pergunta:
 
     headers = {
-        "Authorization": "Bearer SUA_API_KEY_AQUI",
-        "Content-Type": "application/json"
-    }
+    "Authorization": f"Bearer {os.getenv('GROQ_API_KEY')}",
+    "Content-Type": "application/json"
+}
+
 
     data = {
         "model": "llama3-8b-8192",
