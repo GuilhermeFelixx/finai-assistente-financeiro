@@ -73,7 +73,7 @@ if st.button("Enviar") and pergunta:
         }
 
         data = {
-            "model": "llama3-8b-8192",
+            "model": "llama-3.3-70b-versatile",
             "messages": [
                 {
                     "role": "system",
@@ -100,12 +100,13 @@ if st.button("Enviar") and pergunta:
             resposta = res_json["choices"][0]["message"]["content"]
             st.write(resposta)
 
-            # salvar no banco
+            # salvar no banco SOMENTE se resposta existir
             c.execute("INSERT INTO conversas VALUES (?, ?)", (pergunta, resposta))
             conn.commit()
         else:
             st.error("Erro ao comunicar com a API.")
             st.write(res_json)
+
 
     c.execute("INSERT INTO conversas VALUES (?, ?)", (pergunta, resposta))
     conn.commit()
