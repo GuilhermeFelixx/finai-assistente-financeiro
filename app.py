@@ -4,54 +4,84 @@ import sqlite3
 import matplotlib.pyplot as plt
 import numpy as np
 
-# ---------- CONFIG ----------
+# -------------------------------------------------
+# CONFIGURAÇÃO BASE
+# -------------------------------------------------
 st.set_page_config(
     page_title="FinAI",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ---------- DARK MODE CUSTOM ----------
-st.markdown("""
-    <style>
-        body {
-            background-color: #0E1117;
-            color: white;
-        }
-        .stApp {
-            background-color: #0E1117;
-        }
-        h1, h2, h3, h4 {
-            color: #00FFA3;
-        }
-        .stButton>button {
-            background-color: #00FFA3;
-            color: black;
-            font-weight: bold;
-            border-radius: 8px;
-        }
-        .stTextInput>div>div>input {
-            background-color: #1E222A;
-            color: white;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# ---------- HEADER ----------
-st.title("💰 FinAI — Assistente Financeiro Inteligente")
-st.caption("Experiência digital de relacionamento financeiro guiada por IA")
-
-# ---------- SIDEBAR ----------
+# -------------------------------------------------
+# SIDEBAR
+# -------------------------------------------------
 with st.sidebar:
     st.header("⚙️ Configurações")
+
+    dark_mode = st.toggle("🌙 Ativar Dark Mode")
+
     perfil = st.selectbox(
         "Seu perfil financeiro:",
         ["Conservador", "Moderado", "Arrojado"]
     )
-    st.divider()
-    st.info("Projeto educacional com IA generativa.\n\nNão constitui recomendação de investimento.")
 
-# ---------- BANCO ----------
+    st.divider()
+    st.caption("Projeto educacional com IA generativa.")
+
+# -------------------------------------------------
+# TEMA DINÂMICO
+# -------------------------------------------------
+if dark_mode:
+    background = "#0E1117"
+    secondary_bg = "#1E222A"
+    text_color = "white"
+    accent = "#00FFA3"
+else:
+    background = "#FFFFFF"
+    secondary_bg = "#F3F4F6"
+    text_color = "#111111"
+    accent = "#2563EB"
+
+st.markdown(f"""
+    <style>
+        .stApp {{
+            background-color: {background};
+            color: {text_color};
+        }}
+
+        h1, h2, h3, h4 {{
+            color: {accent};
+        }}
+
+        label, .stMarkdown, .stTextInput label {{
+            color: {text_color} !important;
+        }}
+
+        .stButton>button {{
+            background-color: {accent};
+            color: {"black" if dark_mode else "white"};
+            font-weight: bold;
+            border-radius: 8px;
+        }}
+
+        .stTextInput>div>div>input,
+        .stTextArea textarea {{
+            background-color: {secondary_bg};
+            color: {text_color};
+        }}
+    </style>
+""", unsafe_allow_html=True)
+
+# -------------------------------------------------
+# HEADER
+# -------------------------------------------------
+st.title("💰 FinAI — Assistente Financeiro Inteligente")
+st.caption("Experiência digital de relacionamento financeiro guiada por IA")
+
+# -------------------------------------------------
+# BANCO DE DADOS
+# -------------------------------------------------
 conn = sqlite3.connect("historico.db", check_same_thread=False)
 c = conn.cursor()
 
@@ -63,12 +93,14 @@ CREATE TABLE IF NOT EXISTS conversas (
 """)
 conn.commit()
 
-# ---------- LAYOUT EM COLUNAS ----------
+# -------------------------------------------------
+# LAYOUT PRINCIPAL
+# -------------------------------------------------
 col1, col2 = st.columns([1, 1])
 
-# ===============================
-# 📈 COLUNA SIMULADOR
-# ===============================
+# =================================================
+# 📈 SIMULADOR
+# =================================================
 with col1:
     st.subheader("📈 Simulador de Juros Compostos")
 
@@ -80,12 +112,8 @@ with col1:
 
         resultado = valor * (1 + (taxa / 100)) ** tempo
 
-        st.metric(
-            label="Valor Final Projetado",
-            value=f"R$ {resultado:,.2f}"
-        )
+        st.metric("Valor Final Projetado", f"R$ {resultado:,.2f}")
 
-        # Gráfico Profissional
         meses = np.arange(tempo + 1)
         valores = valor * (1 + (taxa / 100)) ** meses
 
@@ -94,20 +122,20 @@ with col1:
         ax.plot(meses, valores, linewidth=3)
         ax.fill_between(meses, valores, alpha=0.2)
 
-        ax.set_facecolor("#1E222A")
-        fig.patch.set_facecolor("#0E1117")
+        ax.set_facecolor(secondary_bg)
+        fig.patch.set_facecolor(background)
 
-        ax.set_title("Evolução do Investimento", color="white")
-        ax.set_xlabel("Meses", color="white")
-        ax.set_ylabel("Valor acumulado (R$)", color="white")
+        ax.set_title("Evolução do Investimento", color=text_color)
+        ax.set_xlabel("Meses", color=text_color)
+        ax.set_ylabel("Valor acumulado (R$)", color=text_color)
 
-        ax.tick_params(colors="white")
+        ax.tick_params(colors=text_color)
 
         st.pyplot(fig)
 
-# ===============================
-# 🤖 COLUNA CHAT
-# ===============================
+# =================================================
+# 🤖 CHAT IA
+# =================================================
 with col2:
     st.subheader("🤖 Assistente Financeiro")
 
@@ -138,18 +166,17 @@ Você é um educador financeiro especialista no Brasil.
 
 O usuário possui perfil {perfil}.
 
-Explique sempre:
+Explique:
 - Conceitos simples
-- Exemplos em reais (R$)
+- Exemplos em reais
 - Riscos envolvidos
-- Relação com inflação e cenário brasileiro
-- Se aplicável, explique também cripto e Web3
+- Relação com inflação brasileira
+- Se aplicável, inclua cripto e Web3
 
 Nunca dê recomendação direta.
-Nunca diga para comprar algo.
 Eduque, não aconselhe.
 
-Inclua sempre:
+Inclua:
 1) Explicação simples
 2) Exemplo prático
 3) Riscos
@@ -174,7 +201,6 @@ Finalize com:
 
             if "choices" in res_json:
                 resposta = res_json["choices"][0]["message"]["content"]
-
                 st.success("Resposta gerada com IA:")
                 st.write(resposta)
 
@@ -184,10 +210,12 @@ Finalize com:
                 st.error("Erro ao comunicar com a API.")
                 st.write(res_json)
 
+# -------------------------------------------------
+# HISTÓRICO
+# -------------------------------------------------
 st.divider()
 
-# ---------- HISTÓRICO ----------
-with st.expander("📜 Histórico de Perguntas"):
+with st.expander("📜 Histórico recente"):
     c.execute("SELECT * FROM conversas ORDER BY ROWID DESC LIMIT 5")
     dados = c.fetchall()
 
@@ -199,4 +227,4 @@ with st.expander("📜 Histórico de Perguntas"):
     else:
         st.write("Nenhuma conversa registrada ainda.")
 
-st.caption("© 2026 FinAI — Projeto educacional desenvolvido com IA generativa.")
+st.caption("© 2026 FinAI — Projeto educacional com IA generativa.")
