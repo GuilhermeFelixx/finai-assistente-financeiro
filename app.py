@@ -92,7 +92,7 @@ if st.button("Enviar") and pergunta:
         resposta = response.json()["choices"][0]["message"]["content"]
 
         st.write(resposta)
-)
+
 
     # salvar no banco
     c.execute("INSERT INTO conversas VALUES (?, ?)", (pergunta, resposta))
