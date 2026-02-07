@@ -14,29 +14,14 @@ st.set_page_config(
 )
 
 # -------------------------------------------------
-# REMOVER TOOLBAR SUPERIOR
-# -------------------------------------------------
-st.markdown("""
-<style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-[data-testid="stToolbar"] {display: none !important;}
-.stDeployButton {display: none;}
-[data-testid="stDecoration"] {display: none;}
-</style>
-""", unsafe_allow_html=True)
-
-# -------------------------------------------------
 # SIDEBAR
 # -------------------------------------------------
 with st.sidebar:
     st.header("⚙️ Configurações")
-    dark_mode = st.toggle("🌙 Ativar Dark Mode", key="dark_toggle")
+    dark_mode = st.toggle("🌙 Ativar Dark Mode")
     perfil = st.selectbox(
         "Seu perfil financeiro:",
-        ["Conservador", "Moderado", "Arrojado"],
-        key="perfil_select"
+        ["Conservador", "Moderado", "Arrojado"]
     )
     st.divider()
     st.caption("Projeto educacional com IA generativa.")
@@ -48,34 +33,34 @@ if dark_mode:
     background = "#0E1117"
     secondary_bg = "#1E222A"
     text_color = "white"
-    accent = "#00FFA3"
 else:
     background = "#FFFFFF"
     secondary_bg = "#F3F4F6"
     text_color = "#111111"
-    accent = "#2563EB"
 
+# -------------------------------------------------
+# CSS GLOBAL
+# -------------------------------------------------
 st.markdown(f"""
 <style>
-.stApp {{
+#MainMenu {{visibility: hidden;}}
+footer {{visibility: hidden;}}
+header {{visibility: hidden;}}
+[data-testid="stToolbar"] {{display: none !important;}}
+.stDeployButton {{display: none;}}
+
+html, body, .stApp {{
     background-color: {background};
     color: {text_color};
 }}
-h1, h2, h3 {{
-    color: {accent};
-}}
-label {{
+
+label, .stMarkdown, .stText {{
     color: {text_color} !important;
 }}
-.stButton>button {{
-    background-color: {accent};
-    color: {"black" if dark_mode else "white"};
-    font-weight: bold;
-    border-radius: 8px;
-}}
-.stTextInput input, .stNumberInput input, .stTextArea textarea {{
-    background-color: {secondary_bg};
-    color: {text_color};
+
+/* Abas brancas no modo dark */
+button[data-baseweb="tab"] {{
+    color: {"white" if dark_mode else "black"} !important;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -91,7 +76,6 @@ st.caption("Simuladores financeiros + IA educacional")
 # -------------------------------------------------
 conn = sqlite3.connect("historico.db", check_same_thread=False)
 c = conn.cursor()
-
 c.execute("""
 CREATE TABLE IF NOT EXISTS conversas (
     pergunta TEXT,
@@ -101,134 +85,136 @@ CREATE TABLE IF NOT EXISTS conversas (
 conn.commit()
 
 # -------------------------------------------------
-# ABAS
+# TABS
 # -------------------------------------------------
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📈 Juros Compostos",
     "₿ DCA Bitcoin",
     "🏦 CDI",
     "🏢 FIIs",
+    "📊 Comparativo",
     "🤖 Chat IA"
 ])
 
 # =================================================
-# JUROS COMPOSTOS
+# 📈 JUROS COMPOSTOS
 # =================================================
 with tab1:
-    st.subheader("Simulador de Juros Compostos")
-
-    valor = st.number_input("Valor inicial (R$)", min_value=0.0, key="jc_valor")
-    taxa = st.number_input("Taxa mensal (%)", min_value=0.0, key="jc_taxa")
-    tempo = st.number_input("Tempo (meses)", min_value=0, key="jc_tempo")
+    valor = st.number_input("Valor inicial (R$)", min_value=0.0, key="jc1")
+    taxa = st.number_input("Taxa mensal (%)", min_value=0.0, key="jc2")
+    tempo = st.number_input("Tempo (meses)", min_value=0, key="jc3")
 
     if st.button("Calcular", key="jc_btn"):
         meses = np.arange(tempo + 1)
-        valores = valor * (1 + (taxa / 100)) ** meses
+        valores_jc = valor * (1 + (taxa / 100)) ** meses
 
-        st.metric("Valor Final", f"R$ {valores[-1]:,.2f}")
+        st.metric("Valor Final", f"R$ {valores_jc[-1]:,.2f}")
 
-        fig, ax = plt.subplots()
-        ax.plot(meses, valores, linewidth=3)
-        ax.set_facecolor(secondary_bg)
-        fig.patch.set_facecolor(background)
-        ax.tick_params(colors=text_color)
+        fig, ax = plt.subplots(figsize=(5,3))
+        ax.plot(meses, valores_jc)
         st.pyplot(fig)
 
 # =================================================
-# DCA BITCOIN
+# ₿ DCA
 # =================================================
 with tab2:
-    st.subheader("Simulador DCA Bitcoin")
-
-    aporte = st.number_input("Aporte mensal (R$)", min_value=0.0, key="dca_aporte")
-    meses_dca = st.number_input("Quantidade de meses", min_value=0, key="dca_meses")
-    retorno = st.number_input("Retorno médio mensal (%)", value=5.0, key="dca_retorno")
+    aporte = st.number_input("Aporte mensal (R$)", min_value=0.0, key="dca1")
+    meses_dca = st.number_input("Meses", min_value=0, key="dca2")
+    retorno = st.number_input("Retorno médio mensal (%)", value=5.0, key="dca3")
 
     if st.button("Simular DCA", key="dca_btn"):
-        valores = []
         total = 0
-
-        for _ in range(int(meses_dca)):
+        valores_dca = []
+        for i in range(int(meses_dca)):
             total = (total + aporte) * (1 + retorno/100)
-            valores.append(total)
+            valores_dca.append(total)
 
-        if valores:
-            st.metric("Valor acumulado", f"R$ {valores[-1]:,.2f}")
-
-            fig, ax = plt.subplots()
-            ax.plot(valores, linewidth=3)
-            ax.set_facecolor(secondary_bg)
-            fig.patch.set_facecolor(background)
-            ax.tick_params(colors=text_color)
+        if valores_dca:
+            st.metric("Valor Final", f"R$ {valores_dca[-1]:,.2f}")
+            fig, ax = plt.subplots(figsize=(5,3))
+            ax.plot(valores_dca)
             st.pyplot(fig)
 
 # =================================================
-# CDI
+# 🏦 CDI
 # =================================================
 with tab3:
-    st.subheader("Simulador 100% CDI")
-
-    valor_cdi = st.number_input("Valor investido (R$)", min_value=0.0, key="cdi_valor")
-    selic = st.number_input("Taxa anual CDI (%)", value=10.0, key="cdi_taxa")
-    meses_cdi = st.number_input("Tempo (meses)", min_value=0, key="cdi_meses")
+    valor_cdi = st.number_input("Valor investido (R$)", min_value=0.0, key="cdi1")
+    taxa_cdi = st.number_input("CDI anual (%)", value=10.0, key="cdi2")
+    meses_cdi = st.number_input("Meses", min_value=0, key="cdi3")
 
     if st.button("Simular CDI", key="cdi_btn"):
-        taxa_mensal = (selic / 100) / 12
+        taxa_mensal = (taxa_cdi/100)/12
         meses = np.arange(meses_cdi + 1)
-        valores = valor_cdi * (1 + taxa_mensal) ** meses
+        valores_cdi = valor_cdi * (1 + taxa_mensal) ** meses
 
-        st.metric("Valor Final", f"R$ {valores[-1]:,.2f}")
-
-        fig, ax = plt.subplots()
-        ax.plot(meses, valores, linewidth=3)
-        ax.set_facecolor(secondary_bg)
-        fig.patch.set_facecolor(background)
-        ax.tick_params(colors=text_color)
+        st.metric("Valor Final", f"R$ {valores_cdi[-1]:,.2f}")
+        fig, ax = plt.subplots(figsize=(5,3))
+        ax.plot(meses, valores_cdi)
         st.pyplot(fig)
 
 # =================================================
-# FIIs
+# 🏢 FIIs
 # =================================================
 with tab4:
-    st.subheader("Simulador FIIs")
-
-    valor_fii = st.number_input("Valor investido (R$)", min_value=0.0, key="fii_valor")
-    dy = st.number_input("Dividend Yield anual (%)", value=8.0, key="fii_dy")
-    meses_fii = st.number_input("Tempo (meses)", min_value=0, key="fii_meses")
-    reinvestir = st.toggle("Reinvestir dividendos?", key="fii_toggle")
+    valor_fii = st.number_input("Valor investido (R$)", min_value=0.0, key="fii1")
+    dy = st.number_input("Dividend Yield anual (%)", value=8.0, key="fii2")
+    meses_fii = st.number_input("Meses", min_value=0, key="fii3")
+    reinvestir = st.toggle("Reinvestir dividendos?", key="fii4")
 
     if st.button("Simular FIIs", key="fii_btn"):
-        taxa_mensal = (dy / 100) / 12
+        taxa_mensal = (dy/100)/12
         total = valor_fii
-        valores = []
+        valores_fii = []
 
-        for _ in range(int(meses_fii)):
+        for i in range(int(meses_fii)):
             dividendo = total * taxa_mensal
             if reinvestir:
                 total += dividendo
-            valores.append(total)
+            valores_fii.append(total)
 
-        if valores:
-            st.metric("Patrimônio Final", f"R$ {valores[-1]:,.2f}")
-
-            fig, ax = plt.subplots()
-            ax.plot(valores, linewidth=3)
-            ax.set_facecolor(secondary_bg)
-            fig.patch.set_facecolor(background)
-            ax.tick_params(colors=text_color)
+        if valores_fii:
+            st.metric("Patrimônio Final", f"R$ {valores_fii[-1]:,.2f}")
+            fig, ax = plt.subplots(figsize=(5,3))
+            ax.plot(valores_fii)
             st.pyplot(fig)
 
 # =================================================
-# CHAT IA
+# 📊 COMPARATIVO
 # =================================================
 with tab5:
-    st.subheader("Assistente Financeiro com IA")
+    st.subheader("Comparativo de Investimentos")
 
-    pergunta = st.text_area("Digite sua pergunta:", key="chat_input")
+    aporte_comp = st.number_input("Valor inicial (R$)", min_value=0.0, key="comp1")
+    meses_comp = st.number_input("Meses", min_value=0, key="comp2")
+    taxa_comp = st.number_input("Taxa mensal estimada (%)", value=1.0, key="comp3")
 
-    if st.button("Enviar Pergunta", key="chat_btn") and pergunta:
+    if st.button("Comparar", key="comp_btn"):
+        meses = np.arange(meses_comp + 1)
 
-        api_key = st.secrets["GROQ_API_KEY"]
+        juros = aporte_comp * (1 + taxa_comp/100) ** meses
+        cdi = aporte_comp * (1 + ((taxa_comp*12)/100)/12) ** meses
+        fii = aporte_comp * (1 + ((taxa_comp*8)/100)/12) ** meses
+
+        fig, ax = plt.subplots(figsize=(6,3))
+        ax.plot(meses, juros, label="Juros Compostos")
+        ax.plot(meses, cdi, label="CDI")
+        ax.plot(meses, fii, label="FIIs")
+        ax.legend()
+        st.pyplot(fig)
+
+# =================================================
+# 🤖 CHAT IA
+# =================================================
+with tab6:
+    pergunta = st.text_area("Digite sua pergunta:")
+
+    if st.button("Enviar Pergunta") and pergunta:
+        try:
+            api_key = st.secrets["GROQ_API_KEY"]
+        except:
+            st.error("API Key não encontrada.")
+            st.stop()
 
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -238,7 +224,7 @@ with tab5:
         data = {
             "model": "llama-3.3-70b-versatile",
             "messages": [
-                {"role": "system", "content": f"Você é educador financeiro no Brasil. Perfil do usuário: {perfil}. Nunca dê recomendação direta."},
+                {"role": "system", "content": f"Você é educador financeiro no Brasil. Perfil: {perfil}. Nunca dê recomendação direta."},
                 {"role": "user", "content": pergunta}
             ]
         }
@@ -253,13 +239,11 @@ with tab5:
 
         if "choices" in res_json:
             resposta = res_json["choices"][0]["message"]["content"]
-            st.success("Resposta:")
             st.write(resposta)
 
             c.execute("INSERT INTO conversas VALUES (?, ?)", (pergunta, resposta))
             conn.commit()
         else:
             st.error("Erro na API")
-            st.write(res_json)
 
 st.caption("© 2026 FinAI — Projeto educacional.")
