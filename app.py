@@ -40,28 +40,25 @@ else:
     text_color = "#111111"
     accent = "#2563EB"
 
-st.markdown(f"""
+st.markdown("""
 <style>
-.stApp {{
-    background-color: {background};
-    color: {text_color};
-}}
-h1, h2, h3 {{
-    color: {accent};
-}}
-label {{
-    color: {text_color} !important;
-}}
-.stButton>button {{
-    background-color: {accent};
-    color: {"black" if dark_mode else "white"};
-    font-weight: bold;
-    border-radius: 8px;
-}}
-.stTextInput input, .stNumberInput input, .stTextArea textarea {{
-    background-color: {secondary_bg};
-    color: {text_color};
-}}
+    /* Esconde menu hamburguer */
+    #MainMenu {visibility: hidden;}
+
+    /* Esconde footer */
+    footer {visibility: hidden;}
+
+    /* Esconde header padrão */
+    header {visibility: hidden;}
+
+    /* Esconde toolbar (estrela, github, share) */
+    [data-testid="stToolbar"] {display: none !important;}
+
+    /* Remove barra de deploy */
+    .stDeployButton {display: none;}
+
+    /* Remove badge do canto inferior */
+    [data-testid="stDecoration"] {display: none;}
 </style>
 """, unsafe_allow_html=True)
 
