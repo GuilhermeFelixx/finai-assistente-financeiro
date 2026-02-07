@@ -31,15 +31,13 @@ with st.sidebar:
 # -------------------------------------------------
 if dark_mode:
     background = "#0E1117"
-    secondary_bg = "#1E222A"
     text_color = "white"
 else:
     background = "#FFFFFF"
-    secondary_bg = "#F3F4F6"
     text_color = "#111111"
 
 # -------------------------------------------------
-# CSS GLOBAL
+# CSS
 # -------------------------------------------------
 st.markdown(f"""
 <style>
@@ -58,7 +56,6 @@ label, .stMarkdown, .stText {{
     color: {text_color} !important;
 }}
 
-/* Abas brancas no modo dark */
 button[data-baseweb="tab"] {{
     color: {"white" if dark_mode else "black"} !important;
 }}
@@ -85,6 +82,20 @@ CREATE TABLE IF NOT EXISTS conversas (
 conn.commit()
 
 # -------------------------------------------------
+# FUNÇÃO PADRÃO PARA GRÁFICO PEQUENO
+# -------------------------------------------------
+def small_chart(x, y, label=None):
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        fig, ax = plt.subplots(figsize=(4,2))
+        ax.plot(x, y, label=label)
+        if label:
+            ax.legend(fontsize=8)
+        ax.tick_params(labelsize=8)
+        plt.tight_layout()
+        st.pyplot(fig, use_container_width=False)
+
+# -------------------------------------------------
 # TABS
 # -------------------------------------------------
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -106,13 +117,10 @@ with tab1:
 
     if st.button("Calcular", key="jc_btn"):
         meses = np.arange(tempo + 1)
-        valores_jc = valor * (1 + (taxa / 100)) ** meses
+        valores = valor * (1 + (taxa / 100)) ** meses
 
-        st.metric("Valor Final", f"R$ {valores_jc[-1]:,.2f}")
-
-        fig, ax = plt.subplots(figsize=(5,3))
-        ax.plot(meses, valores_jc)
-        st.pyplot(fig)
+        st.metric("Valor Final", f"R$ {valores[-1]:,.2f}")
+        small_chart(meses, valores)
 
 # =================================================
 # ₿ DCA
@@ -124,16 +132,15 @@ with tab2:
 
     if st.button("Simular DCA", key="dca_btn"):
         total = 0
-        valores_dca = []
+        valores = []
+
         for i in range(int(meses_dca)):
             total = (total + aporte) * (1 + retorno/100)
-            valores_dca.append(total)
+            valores.append(total)
 
-        if valores_dca:
-            st.metric("Valor Final", f"R$ {valores_dca[-1]:,.2f}")
-            fig, ax = plt.subplots(figsize=(5,3))
-            ax.plot(valores_dca)
-            st.pyplot(fig)
+        if valores:
+            st.metric("Valor Final", f"R$ {valores[-1]:,.2f}")
+            small_chart(range(len(valores)), valores)
 
 # =================================================
 # 🏦 CDI
@@ -146,12 +153,10 @@ with tab3:
     if st.button("Simular CDI", key="cdi_btn"):
         taxa_mensal = (taxa_cdi/100)/12
         meses = np.arange(meses_cdi + 1)
-        valores_cdi = valor_cdi * (1 + taxa_mensal) ** meses
+        valores = valor_cdi * (1 + taxa_mensal) ** meses
 
-        st.metric("Valor Final", f"R$ {valores_cdi[-1]:,.2f}")
-        fig, ax = plt.subplots(figsize=(5,3))
-        ax.plot(meses, valores_cdi)
-        st.pyplot(fig)
+        st.metric("Valor Final", f"R$ {valores[-1]:,.2f}")
+        small_chart(meses, valores)
 
 # =================================================
 # 🏢 FIIs
@@ -165,43 +170,45 @@ with tab4:
     if st.button("Simular FIIs", key="fii_btn"):
         taxa_mensal = (dy/100)/12
         total = valor_fii
-        valores_fii = []
+        valores = []
 
         for i in range(int(meses_fii)):
             dividendo = total * taxa_mensal
             if reinvestir:
                 total += dividendo
-            valores_fii.append(total)
+            valores.append(total)
 
-        if valores_fii:
-            st.metric("Patrimônio Final", f"R$ {valores_fii[-1]:,.2f}")
-            fig, ax = plt.subplots(figsize=(5,3))
-            ax.plot(valores_fii)
-            st.pyplot(fig)
+        if valores:
+            st.metric("Patrimônio Final", f"R$ {valores[-1]:,.2f}")
+            small_chart(range(len(valores)), valores)
 
 # =================================================
 # 📊 COMPARATIVO
 # =================================================
 with tab5:
-    st.subheader("Comparativo de Investimentos")
+    st.subheader("Comparativo")
 
-    aporte_comp = st.number_input("Valor inicial (R$)", min_value=0.0, key="comp1")
-    meses_comp = st.number_input("Meses", min_value=0, key="comp2")
-    taxa_comp = st.number_input("Taxa mensal estimada (%)", value=1.0, key="comp3")
+    aporte = st.number_input("Valor inicial (R$)", min_value=0.0, key="comp1")
+    meses = st.number_input("Meses", min_value=0, key="comp2")
+    taxa = st.number_input("Taxa mensal estimada (%)", value=1.0, key="comp3")
 
     if st.button("Comparar", key="comp_btn"):
-        meses = np.arange(meses_comp + 1)
+        m = np.arange(meses + 1)
 
-        juros = aporte_comp * (1 + taxa_comp/100) ** meses
-        cdi = aporte_comp * (1 + ((taxa_comp*12)/100)/12) ** meses
-        fii = aporte_comp * (1 + ((taxa_comp*8)/100)/12) ** meses
+        juros = aporte * (1 + taxa/100) ** m
+        cdi = aporte * (1 + ((taxa*12)/100)/12) ** m
+        fii = aporte * (1 + ((taxa*8)/100)/12) ** m
 
-        fig, ax = plt.subplots(figsize=(6,3))
-        ax.plot(meses, juros, label="Juros Compostos")
-        ax.plot(meses, cdi, label="CDI")
-        ax.plot(meses, fii, label="FIIs")
-        ax.legend()
-        st.pyplot(fig)
+        col1, col2, col3 = st.columns([1,2,1])
+        with col2:
+            fig, ax = plt.subplots(figsize=(4,2))
+            ax.plot(m, juros, label="Juros")
+            ax.plot(m, cdi, label="CDI")
+            ax.plot(m, fii, label="FIIs")
+            ax.legend(fontsize=8)
+            ax.tick_params(labelsize=8)
+            plt.tight_layout()
+            st.pyplot(fig, use_container_width=False)
 
 # =================================================
 # 🤖 CHAT IA
@@ -240,7 +247,6 @@ with tab6:
         if "choices" in res_json:
             resposta = res_json["choices"][0]["message"]["content"]
             st.write(resposta)
-
             c.execute("INSERT INTO conversas VALUES (?, ?)", (pergunta, resposta))
             conn.commit()
         else:
