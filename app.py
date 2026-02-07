@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import sqlite3
 import matplotlib.pyplot as plt
+import os
 
 # ---------- CONFIG ----------
 st.set_page_config(page_title="FinAI", layout="centered")
@@ -59,37 +60,39 @@ pergunta = st.text_input("Digite sua pergunta:")
 
 if st.button("Enviar") and pergunta:
 
-    headers = {
-    "Authorization": f"Bearer {os.getenv('GROQ_API_KEY')}",
-    "Content-Type": "application/json"
-}
+    with st.spinner("Pensando... 🤖"):
 
+        headers = {
+            "Authorization": f"Bearer {os.getenv('GROQ_API_KEY')}",
+            "Content-Type": "application/json"
+        }
 
-    data = {
-        "model": "llama3-8b-8192",
-        "messages": [
-            {
-                "role": "system",
-                "content": f"""
-                Você é um assistente financeiro educativo.
-                O usuário tem perfil {perfil}.
-                Nunca dê recomendação direta de investimento.
-                Explique de forma clara e didática.
-                """
-            },
-            {"role": "user", "content": pergunta}
-        ]
-    }
+        data = {
+            "model": "llama3-8b-8192",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": f"""
+                    Você é um assistente financeiro educativo.
+                    O usuário tem perfil {perfil}.
+                    Nunca dê recomendação direta de investimento.
+                    Explique de forma clara e didática.
+                    """
+                },
+                {"role": "user", "content": pergunta}
+            ]
+        }
 
-    response = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers=headers,
-        json=data
-    )
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json=data
+        )
 
-    resposta = response.json()["choices"][0]["message"]["content"]
+        resposta = response.json()["choices"][0]["message"]["content"]
 
-    st.write(resposta)
+        st.write(resposta)
+)
 
     # salvar no banco
     c.execute("INSERT INTO conversas VALUES (?, ?)", (pergunta, resposta))
